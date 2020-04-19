@@ -53,26 +53,26 @@ main =  do
     bb_repo_path    <- get_env' "BB_REPO_PATH"
     extra_git_args  <- T.words <$> get_env_text "EXTRA_GIT_ARGS"
     stack_url       <- get_env  "STACK_URL" >>=
-                          \case Nothing -> return DEFAULT_STACK_URL 
+                          \case Nothing -> return DEFAULT_STACK_URL
                                 Just j  -> return j
     install_path_   <- get_env  "STACK_INSTALL_DIR" >>= \path ->
                           let path' = fromMaybe "~/.local/bin" path
                           -- perform any shell expansions:
                           in T.strip <$> bash "echo" [path']
-    let 
+    let
       install_path :: IsString a => a
       install_path  =  fromString $ T.unpack install_path_
 
     let bb_auth = Auth bb_userid bb_password
       -- i.e. the path bit of the URL
       -- e.g. github.com/username/repository.git
- 
+
     echo "[+] checking some prereqs"
 
     forM_ ["tar", "curl", "git"] $ \tool -> do
-      echo $ "[+] " <> tool
+      echo $ "   [-] " <> tool
       void $ which' $ fromText tool
- 
+
     echo "[+] installing stack"
     void $ cmd "mkdir" "-p" install_path
     prependToPath install_path
@@ -98,12 +98,19 @@ main =  do
       -- get package name and version
       [pkg, ver] <- T.words <$> cmd "stack" "ls" "dependencies" "--depth" "0"
 
-      let pkg_ver = [qc|{idt pkg}-{idt ver}|]
-          tgz     = pkg_ver <.> "tgz"
+      let pkg_ver :: Text
+          pkg_ver = [qc|{idt pkg}-{idt ver}|]
 
-      mkdir_p pkg_ver
 
+          tgz     = fromText pkg_ver <.> "tgz"
+
+      echo $ "  [-] make temp dir " <> pkg_ver
+      mkdir_p $ fromText pkg_ver
+
+      echo $ "  [-] copy executables into " <> pkg_ver
       void $ cmd "stack" "--local-bin-path" pkg_ver "--copy-bins"
+
+      echo $ "  [-] tar into " <> T.pack (show tgz)
       void $ cmd "tar" "cvf" tgz pkg_ver
 
       --push_to_downloads bb_auth bb_userid "some-build" tgz
