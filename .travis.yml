@@ -169,5 +169,5 @@ deploy:
   on:
     tags: true
     all_branches: true
-    repo: phlummox/bitbucket-builder
+    repo: phlummox/bitbucket-hs-builder
     condition: $RELEASE = true
