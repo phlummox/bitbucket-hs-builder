@@ -108,7 +108,7 @@ main =  do
       mkdir_p $ fromText pkg_ver
 
       echo $ "  [-] copy executables into " <> pkg_ver
-      void $ cmd "stack" "--local-bin-path" pkg_ver "--copy-bins"
+      void $ cmd "stack" "--local-bin-path" (fromText pkg_ver) "build" "--copy-bins"
 
       echo $ "  [-] tar into " <> T.pack (show tgz)
       void $ cmd "tar" "cvf" tgz pkg_ver
